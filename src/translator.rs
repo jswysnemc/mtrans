@@ -157,11 +157,11 @@ async fn interactive_mode(client: LLMClient) -> Result<()> {
                     continue;
                 }
 
-                // 解析输入
-                let (source_lang, text_opt) = parse_language(line);
+                // 解析输入：:lang 语法糖设置目标语言（与命令行模式一致）
+                let (target_lang_opt, text_opt) = parse_language(line);
                 let text = text_opt.unwrap_or_else(|| line.to_string());
-                let source = source_lang.as_deref().unwrap_or("auto");
-                let target_lang = "zh"; // 默认翻译为中文
+                let source = "auto"; // 源语言自动检测
+                let target_lang = target_lang_opt.as_deref().unwrap_or("zh"); // 默认翻译为中文
 
                 // 构建提示词
                 let prompt = build_common_prompt(&text, source, target_lang)?;
@@ -198,10 +198,10 @@ async fn interactive_mode(client: LLMClient) -> Result<()> {
 
 fn print_interactive_help() {
     println!("{}", "交互模式帮助:".green().bold());
-    println!("  直接输入文本进行翻译");
-    println!("  :zh 文本  - 指定源语言为中文，翻译为英文");
-    println!("  :en 文本  - 指定源语言为英文，翻译为中文");
-    println!("  :jp 文本  - 指定源语言为日语，翻译为中文");
+    println!("  直接输入文本进行翻译（默认翻译为中文）");
+    println!("  :en 文本  - 翻译为英文");
+    println!("  :jp 文本  - 翻译为日语");
+    println!("  :zh 文本  - 翻译为中文");
     println!("  exit/quit/:q  - 退出交互模式");
     println!();
 }
