@@ -1,4 +1,4 @@
-use crate::cli::{Cli, list_languages, parse_language};
+use crate::cli::{list_languages, parse_language, Cli};
 use crate::client::LLMClient;
 use crate::config::Config;
 use crate::error::{MtransError, Result};
@@ -66,10 +66,12 @@ pub async fn handle_translation(cli: Cli) -> Result<()> {
         output_result(&result, &cli.output, cli.clipboard)?;
     } else {
         // 流式输出到终端
-        let result = client.chat_stream(&prompt, |chunk| {
-            print!("{}", chunk);
-            io::stdout().flush().ok();
-        }).await?;
+        let result = client
+            .chat_stream(&prompt, |chunk| {
+                print!("{}", chunk);
+                io::stdout().flush().ok();
+            })
+            .await?;
         println!();
 
         // 复制到剪贴板
@@ -83,24 +85,60 @@ pub async fn handle_translation(cli: Cli) -> Result<()> {
     Ok(())
 }
 
+/// 获取待处理的输入文本。
+///
+/// 参数:
+/// - `cli`: 命令行参数。
+///
+/// 返回:
+/// - 成功时返回输入文本。
+/// - 失败时返回读取文本过程中产生的错误。
 fn get_input_text(cli: &Cli) -> Result<String> {
+    // 1. 位置参数优先级最高，便于直接翻译短文本
     if let Some(text) = &cli.text {
         return Ok(text.clone());
     }
 
+    // 2. 读取剪贴板内容，用于管道不方便传递的场景
+    if cli.from_clipboard {
+        return read_clipboard_text();
+    }
+
+    // 3. 读取文件内容，用于处理较长文本
     if let Some(file_path) = &cli.file {
         return read_file(file_path);
     }
 
-    // 从 stdin 读取
+    // 4. 从 stdin 读取，保持原有默认输入行为
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
     Ok(input.trim().to_string())
 }
 
+/// 从系统剪贴板读取文本。
+///
+/// 参数:
+/// - 无。
+///
+/// 返回:
+/// - 成功时返回剪贴板中的文本内容。
+/// - 失败时返回剪贴板访问错误。
+fn read_clipboard_text() -> Result<String> {
+    let mut clipboard = Clipboard::new()?;
+    let text = clipboard.get_text()?;
+    Ok(text.trim().to_string())
+}
+
+/// 从指定文件读取文本。
+///
+/// 参数:
+/// - `path`: 待读取文件路径。
+///
+/// 返回:
+/// - 成功时返回文件内容。
+/// - 失败时返回文件读取错误。
 fn read_file(path: &str) -> Result<String> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| MtransError::Io(e))?;
+    let content = std::fs::read_to_string(path).map_err(|e| MtransError::Io(e))?;
     Ok(content)
 }
 
@@ -127,7 +165,10 @@ fn output_result(result: &str, output_path: &Option<String>, to_clipboard: bool)
 }
 
 async fn interactive_mode(client: LLMClient) -> Result<()> {
-    println!("{}", "进入交互模式 (输入 'exit' 或 'quit' 退出)".green().bold());
+    println!(
+        "{}",
+        "进入交互模式 (输入 'exit' 或 'quit' 退出)".green().bold()
+    );
     println!();
 
     let mut rl = Reedline::create();
@@ -170,10 +211,12 @@ async fn interactive_mode(client: LLMClient) -> Result<()> {
                 io::stdout().flush()?;
 
                 // 流式输出
-                let _result = client.chat_stream(&prompt, |chunk| {
-                    print!("{}", chunk);
-                    io::stdout().flush().ok();
-                }).await?;
+                let _result = client
+                    .chat_stream(&prompt, |chunk| {
+                        print!("{}", chunk);
+                        io::stdout().flush().ok();
+                    })
+                    .await?;
 
                 println!();
                 println!();

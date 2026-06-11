@@ -10,6 +10,7 @@
 - 🔄 **交互式模式** - REPL 模式，连续翻译
 - 📁 **文件支持** - 从文件读取，输出到文件
 - 📋 **剪贴板支持** - 自动复制结果到剪贴板
+- **剪贴板输入** - 从剪贴板读取待翻译文本
 - 📝 **自定义 Prompt** - 支持自定义翻译模板
 - 🔐 **安全存储** - API Key 使用硬件指纹加密存储
 
@@ -92,6 +93,10 @@ mtrans "你好世界" -F en              # 指定源语言（-F 大写）
 # 从标准输入读取
 echo "Hello" | mtrans :zh
 cat README.md | mtrans :zh
+
+# 从剪贴板读取
+mtrans -C :zh
+mtrans --from-clipboard -t zh
 
 # 翻译命令行帮助
 ls --help | mtrans
@@ -183,6 +188,13 @@ mtrans -f input.txt -o output.txt -t zh
 # 自动复制结果到剪贴板
 mtrans "Hello world" --clipboard
 mtrans :zh "Hello" --clipboard
+
+# 从剪贴板读取输入
+mtrans -C :zh
+mtrans --from-clipboard -t zh
+
+# 从剪贴板读取输入，并将翻译结果写回剪贴板
+mtrans -C :zh --clipboard
 ```
 
 ### 显示支持的语言
@@ -238,6 +250,7 @@ mtrans [OPTIONS] [TEXT] [COMMAND]
   -s, --style <STYLE>       代码命名风格
   -i, --interactive         交互式 REPL 模式
   -f, --file <PATH>         从文件读取
+  -C, --from-clipboard      从剪贴板读取输入文本
   -o, --output <PATH>       输出到文件
       --clipboard           复制到剪贴板
   -h, --help                显示帮助信息

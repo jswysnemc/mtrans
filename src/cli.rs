@@ -42,6 +42,10 @@ pub struct Cli {
     #[arg(short = 'f', long = "file")]
     pub file: Option<String>,
 
+    /// 从剪贴板读取输入文本
+    #[arg(short = 'C', long = "from-clipboard")]
+    pub from_clipboard: bool,
+
     /// 输出到文件
     #[arg(short = 'o', long = "output")]
     pub output: Option<String>,
